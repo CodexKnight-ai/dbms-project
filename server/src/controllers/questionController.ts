@@ -3,7 +3,7 @@ import { executePool } from '../config/db';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 export const getQuestions = async (req: AuthenticatedRequest, res: Response) => {
-  const { rating, tag, bookmarked, page = 1, limit = 20 } = req.query;
+  const { rating, tag, page = 1, limit = 20 } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
   const UserID = req.user?.UserID;
 
@@ -22,8 +22,7 @@ export const getQuestions = async (req: AuthenticatedRequest, res: Response) => 
          JOIN VerdictLookup v ON sub.VerdictID = v.VerdictID 
          WHERE sub.QuestionID = q.QuestionID AND sub.UserID = :UserID
          ORDER BY sub.SubmittedAt DESC 
-         FETCH NEXT 1 ROWS ONLY) as SolvedStatus,
-        (SELECT COUNT(*) FROM Bookmark b WHERE b.QuestionID = q.QuestionID AND b.UserID = :UserID) as IsBookmarked
+         FETCH NEXT 1 ROWS ONLY) as SolvedStatus
       FROM Question q 
       LEFT JOIN ReferenceSolution s ON q.QuestionID = s.QuestionID 
       WHERE 1=1 `;
@@ -36,9 +35,6 @@ export const getQuestions = async (req: AuthenticatedRequest, res: Response) => 
     if (tag) {
       sql += `AND q.Tags LIKE :tag `;
       binds.tag = `%${tag}%`;
-    }
-    if (bookmarked === 'true') {
-      sql += `AND EXISTS (SELECT 1 FROM Bookmark b WHERE b.QuestionID = q.QuestionID AND b.UserID = :UserID) `;
     }
 
     sql += `ORDER BY q.Rating ASC, q.CreatedAt DESC OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
@@ -104,46 +100,5 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response) =
     res.status(201).json({ message: 'Question created successfully' });
   } catch (err: any) {
     res.status(500).json({ error: 'Internal Server Error', details: err.message });
-  }
-};
-
-export const deleteQuestion = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  try {
-    const qSql = `DELETE FROM Question WHERE QuestionID = :id`;
-    await executePool(qSql, { id });
-    res.json({ message: 'Question deleted successfully' });
-  } catch (err: any) {
-    // This catch block will receive the ORA-20001 error from our trigger
-    res.status(500).json({ error: 'Deletion failed.', details: err.message });
-  }
-};
-
-export const updateQuestion = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const { CF_Link, Title, Rating, Tags, Hint, Solution } = req.body;
-  try {
-    const qSql = `
-      UPDATE Question 
-      SET CF_Link = :CF_Link, Title = :Title, Rating = :Rating, Tags = :Tags, Hint = :Hint
-      WHERE QuestionID = :id
-    `;
-    await executePool(qSql, { id, CF_Link, Title, Rating, Tags, Hint });
-
-    if (Solution) {
-      // Upsert reference solution
-      const checkSolSql = `SELECT * FROM ReferenceSolution WHERE QuestionID = :id`;
-      const existing = await executePool<any>(checkSolSql, { id });
-
-      if (existing.rows?.length) {
-        await executePool(`UPDATE ReferenceSolution SET CodeSnippet = :Solution WHERE QuestionID = :id`, { id, Solution });
-      } else {
-        await executePool(`INSERT INTO ReferenceSolution (QuestionID, Description, CodeSnippet, Language) VALUES (:id, 'Reference Solution', :Solution, 'cpp')`, { id, Solution });
-      }
-    }
-
-    res.json({ message: 'Question updated successfully' });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Update failed.', details: err.message });
   }
 };

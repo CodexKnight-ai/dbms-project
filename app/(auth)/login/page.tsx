@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import api from '@/lib/api';
-import { Loader2, Lock, Mail, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/app/store/useAuthStore';
+import { Loader2, Lock, Mail, ArrowRight, Zap } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,13 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { setAuth, isAuthenticated } = useAuthStore();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, router]);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +22,8 @@ export default function LoginPage() {
 
     try {
       const response = await api.post('/auth/login', { Email: email, Password: password });
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       setAuth(response.data.user, response.data.token);
       router.push('/dashboard');
     } catch (err: any) {
@@ -37,66 +34,86 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md space-y-8 rounded-2xl border bg-card p-10 shadow-2xl transition-all hover:shadow-primary/5">
-        <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tighter text-foreground decoration-primary underline-offset-4 decoration-2">Welcome Back.</h1>
-          <p className="mt-2 text-sm text-muted-foreground font-medium">Log in to track your competitive programming progress.</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', position: 'relative', overflow: 'hidden' }}>
+      <div className="noise-overlay" />
+      
+      <div className="glow-bubble" style={{ width: '500px', height: '500px', backgroundColor: 'rgba(43, 89, 255, 0.2)', top: '-20%', left: '-10%' }} />
+      <div className="glow-bubble" style={{ width: '400px', height: '400px', backgroundColor: 'rgba(147, 51, 234, 0.1)', bottom: '-10%', right: '-10%', animationDelay: '-5s' }} />
+
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '440px', padding: '48px', borderRadius: 'var(--radius-2xl)', position: 'relative', zIndex: 10 }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--primary-light)', border: '1px solid rgba(43, 89, 255, 0.3)', marginBottom: '24px', boxShadow: '0 0 20px rgba(43, 89, 255, 0.2)' }}>
+            <Zap size={32} color="var(--primary)" />
+          </div>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.02em', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Access <span style={{ background: 'linear-gradient(135deg, #fff 0%, #7393ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Granted.</span>
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>Elevate your performance. Join the elite.</p>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-center text-xs font-bold text-destructive">
+          <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '16px', borderRadius: 'var(--radius-md)', color: '#fb7185', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', marginBottom: '24px' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <input
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Email Terminal</label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="email"
                 required
-                className="w-full rounded-xl border bg-muted/50 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="access@devprogress.io"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <input
+          <div>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Secure Key</label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="password"
                 required
-                className="w-full rounded-xl border bg-muted/50 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none', letterSpacing: '0.2em' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-black text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+            className="button-primary"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '16px', marginTop: '8px' }}
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+            {loading ? <Loader2 size={20} className="animate-spin" /> : (
               <>
-                Sign In 
-                <ArrowRight className="h-4 w-4" />
+                Initialize Access <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
 
-        <div className="text-center">
-            <p className="text-xs text-muted-foreground">Don't have an account? <a href="/register" className="font-bold text-primary hover:underline underline-offset-2">Join for free</a></p>
+        <div style={{ textAlign: 'center', marginTop: '32px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            Don't have an authentication key?{' '}
+            <Link href="/register" style={{ color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', textDecoration: 'none', marginLeft: '8px' }}>
+              Register Protocol
+            </Link>
+          </p>
         </div>
       </div>
     </div>

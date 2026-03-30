@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
-import { Loader2, Lock, Mail, User, Code, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useAuthStore } from '@/app/store/useAuthStore';
+import api from '@/lib/api';
+import { Loader2, Lock, Mail, User, UserPlus, Code, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -18,13 +17,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,120 +49,141 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-[#050505] p-6">
-      <div className="w-full max-w-lg space-y-8 rounded-[2.5rem] border border-zinc-200/50 dark:border-zinc-800/50 bg-white/70 dark:bg-black/70 backdrop-blur-2xl p-10 shadow-2xl transition-all hover:shadow-indigo-500/10">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-2">
-            <Code className="text-white w-6 h-6" />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', position: 'relative', overflow: 'hidden', padding: '24px' }}>
+      <div className="noise-overlay" />
+      
+      <div className="glow-bubble" style={{ width: '600px', height: '600px', backgroundColor: 'rgba(43, 89, 255, 0.15)', top: '-10%', left: '-10%' }} />
+      <div className="glow-bubble" style={{ width: '500px', height: '500px', backgroundColor: 'rgba(147, 51, 234, 0.1)', bottom: '-10%', right: '-5%', animationDelay: '-5s' }} />
+
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '640px', padding: '48px', borderRadius: 'var(--radius-2xl)', position: 'relative', zIndex: 10 }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--primary-light)', border: '1px solid rgba(43, 89, 255, 0.3)', marginBottom: '24px', boxShadow: '0 0 20px rgba(43, 89, 255, 0.2)' }}>
+            <UserPlus size={32} color="var(--primary)" />
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
-            Create an <span className="text-indigo-600">Account.</span>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.02em', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Protocol <span style={{ color: 'var(--primary)' }}>Sync.</span>
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Join the community of elite competitive programmers.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>Join the elite community of competitive programmers.</p>
         </div>
 
         {error && (
-          <div className="rounded-2xl bg-rose-500/10 p-4 border border-rose-500/20 text-center text-xs font-bold text-rose-500 animate-in fade-in zoom-in duration-300">
+          <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '16px', borderRadius: 'var(--radius-md)', color: '#fb7185', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', marginBottom: '24px' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Full Name</label>
-            <div className="relative group">
-              <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
+        <form onSubmit={handleRegister} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Full Identity</label>
+            <div style={{ position: 'relative' }}>
+              <User size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="text"
                 name="FullName"
                 required
-                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 pl-11 pr-4 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
-                placeholder="John Doe"
                 value={formData.FullName}
                 onChange={handleChange}
+                placeholder="Commander John Doe"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Communication Terminal</label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="email"
                 name="Email"
                 required
-                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 pl-11 pr-4 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
-                placeholder="john@example.com"
                 value={formData.Email}
                 onChange={handleChange}
+                placeholder="connect@devprogress.io"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">CF Handle</label>
-            <div className="relative group">
-              <Code className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>CF Handle</label>
+            <div style={{ position: 'relative' }}>
+              <Code size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="text"
                 name="CF_Handle"
-                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 pl-11 pr-4 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
-                placeholder="tourist"
                 value={formData.CF_Handle}
                 onChange={handleChange}
+                placeholder="tourist"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
+          <div>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Access Key</label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="password"
                 name="Password"
                 required
-                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 pl-11 pr-4 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
-                placeholder="••••••••"
                 value={formData.Password}
                 onChange={handleChange}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none', letterSpacing: '0.2em' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Confirm Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
+          <div>
+            <label style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)', marginLeft: '4px', marginBottom: '8px', display: 'block' }}>Verify Access Key</label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={20} color="var(--text-muted)" style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)' }} />
+              <input 
                 type="password"
                 name="ConfirmPassword"
                 required
-                className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 pl-11 pr-4 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium"
-                placeholder="••••••••"
                 value={formData.ConfirmPassword}
                 onChange={handleChange}
+                placeholder="••••••••"
+                style={{ width: '100%', padding: '16px 16px 16px 48px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-main)', fontSize: '0.875rem', outline: 'none', letterSpacing: '0.2em' }}
+                onFocus={(e) => Object.assign(e.target.style, { borderColor: 'rgba(65, 105, 225, 0.5)', backgroundColor: 'rgba(255, 255, 255, 0.08)' })}
+                onBlur={(e) => Object.assign(e.target.style, { borderColor: 'var(--border-color)', backgroundColor: 'rgba(255, 255, 255, 0.05)' })}
               />
             </div>
           </div>
 
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             disabled={loading}
-            className="md:col-span-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-4 text-sm font-black text-white shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+            className="button-primary"
+            style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '16px', marginTop: '16px' }}
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+            {loading ? <Loader2 size={20} className="animate-spin" /> : (
               <>
-                Initialize Account
-                <ArrowRight className="h-5 w-5" />
+                Initialize Profile <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
 
-        <div className="text-center">
-            <p className="text-xs text-zinc-500 font-medium">Already have an account? <Link href="/login" className="font-bold text-indigo-600 hover:underline underline-offset-4 decoration-2">Sign in here</Link></p>
+        <div style={{ textAlign: 'center', marginTop: '32px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            Already have an authentication key?{' '}
+            <Link href="/login" style={{ color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', textDecoration: 'none', marginLeft: '8px' }}>
+              Authorize Here
+            </Link>
+          </p>
         </div>
       </div>
     </div>

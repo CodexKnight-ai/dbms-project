@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import BackgroundOrbs from '@/components/ui/BackgroundOrbs';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DevProgress | Manage Your CP Journey",
-  description: "A comprehensive platform to track your competitive programming progress, integrated with Codeforces.",
+  title: "DevProgress | The Elite CP Workspace",
+  description: "High-performance tracking for competitive programmers.",
 };
 
 export default function RootLayout({
@@ -23,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className="dark scroll-smooth">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}>
+        <BackgroundOrbs />
+        {children}
+      </body>
     </html>
   );
 }
