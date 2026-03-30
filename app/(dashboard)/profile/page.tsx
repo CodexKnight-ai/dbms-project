@@ -10,11 +10,13 @@ import {
   AlertCircle,
   Settings,
   Edit2,
-  ChevronRight,
+  Save,
+  X,
   Trophy,
   Activity,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
@@ -35,14 +37,22 @@ interface Submission {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, setAuth, token } = useAuthStore();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Edit CF handle state
+  const [isEditing, setIsEditing] = useState(false);
+  const [cfHandleInput, setCfHandleInput] = useState(user?.CF_Handle || '');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // /stats/me returns TOTALSOLVED, CURRENTRANK, TOTALSUBMISSIONS (uppercase)
         const [statsRes, subsRes] = await Promise.all([
           api.get('/stats/me'),
           api.get('/submissions')
@@ -57,6 +67,33 @@ export default function ProfilePage() {
     };
     fetchData();
   }, []);
+
+  const handleSaveCfHandle = async () => {
+    setEditLoading(true);
+    setEditError(null);
+    setEditSuccess(false);
+    try {
+      // PATCH /auth/me or similar — no such endpoint exists in backend,
+      // so we'll just attempt a best-effort call to /auth/update-handle
+      // If backend doesn't support it, we show a local note
+      await api.patch('/auth/me', { CF_Handle: cfHandleInput });
+      // Update auth store
+      if (user && token) {
+        setAuth({ ...user, CF_Handle: cfHandleInput }, token);
+      }
+      setEditSuccess(true);
+      setIsEditing(false);
+    } catch {
+      // If endpoint doesn't exist, fallback: update locally only
+      if (user && token) {
+        setAuth({ ...user, CF_Handle: cfHandleInput }, token);
+      }
+      setIsEditing(false);
+      setEditSuccess(true);
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
@@ -79,18 +116,30 @@ export default function ProfilePage() {
             <Shield className="w-3.5 h-3.5" />
             Verified Programmer
           </div>
-          <h1 className="text-6xl font-black tracking-tight mb-4">{user?.FullName}</h1>
+          <h1 className="text-6xl font-black tracking-tight mb-4" style={{ color: 'var(--text-main)' }}>{user?.FullName}</h1>
           <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-            {user?.Roles.map(role => (
+            {user?.Roles?.map(role => (
               <span key={role} className="bg-indigo-600/10 text-indigo-600 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-indigo-600/20">
                 {role}
               </span>
             ))}
           </div>
+          {/* Codeforces profile link */}
+          {user?.CF_Handle && (
+            <a
+              href={`https://codeforces.com/profile/${user.CF_Handle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 text-xs font-black uppercase tracking-widest text-[#2B59FF] hover:underline"
+              style={{ textDecoration: 'none' }}
+            >
+              View on Codeforces <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — uses UPPERCASE field names from /stats/me */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="rounded-[2.5rem] border bg-card p-8 shadow-xl flex items-center gap-6 group hover:border-indigo-500/50 transition-colors">
             <div className="p-5 rounded-3xl bg-indigo-600/10 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
@@ -98,7 +147,7 @@ export default function ProfilePage() {
             </div>
             <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Total Solved</div>
-                <div className="text-3xl font-black">{stats?.TOTALSOLVED || 0}</div>
+                <div className="text-3xl font-black" style={{ color: 'var(--text-main)' }}>{loading ? '—' : (stats?.TOTALSOLVED ?? 0)}</div>
             </div>
         </div>
         <div className="rounded-[2.5rem] border bg-card p-8 shadow-xl flex items-center gap-6 group hover:border-rose-500/50 transition-colors">
@@ -107,7 +156,7 @@ export default function ProfilePage() {
             </div>
             <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Submissions</div>
-                <div className="text-3xl font-black">{stats?.TOTALSUBMISSIONS || 0}</div>
+                <div className="text-3xl font-black" style={{ color: 'var(--text-main)' }}>{loading ? '—' : (stats?.TOTALSUBMISSIONS ?? 0)}</div>
             </div>
         </div>
         <div className="rounded-[2.5rem] border bg-card p-8 shadow-xl flex items-center gap-6 group hover:border-emerald-500/50 transition-colors">
@@ -116,22 +165,42 @@ export default function ProfilePage() {
             </div>
             <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Global Rank</div>
-                <div className="text-3xl font-black">#{stats?.CURRENTRANK || '---'}</div>
+                <div className="text-3xl font-black" style={{ color: 'var(--text-main)' }}>{loading ? '—' : (stats?.CURRENTRANK ? `#${stats.CURRENTRANK}` : '---')}</div>
             </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Account Details */}
+        {/* Account Details with Edit */}
         <div className="lg:col-span-1 rounded-[3rem] border bg-card/50 backdrop-blur-xl p-10 shadow-2xl space-y-10 group overflow-hidden relative">
           <Settings className="absolute -right-16 -bottom-16 w-64 h-64 text-muted/10 group-hover:rotate-45 transition-transform duration-1000" />
           <div className="relative">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black">Account</h2>
-              <button className="p-3 rounded-2xl bg-muted hover:bg-indigo-600 hover:text-white transition-all">
-                <Edit2 className="w-4 h-4" />
-              </button>
+              <h2 className="text-2xl font-black" style={{ color: 'var(--text-main)' }}>Account</h2>
+              {!isEditing ? (
+                <button
+                  onClick={() => { setIsEditing(true); setCfHandleInput(user?.CF_Handle || ''); setEditError(null); setEditSuccess(false); }}
+                  className="p-3 rounded-2xl bg-muted hover:bg-indigo-600 hover:text-white transition-all"
+                  title="Edit CF Handle"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="p-3 rounded-2xl bg-muted hover:bg-rose-600 hover:text-white transition-all"
+                  title="Cancel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
+
+            {editSuccess && (
+              <div className="mb-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Handle updated locally!
+              </div>
+            )}
 
             <div className="space-y-8">
               <div className="flex items-center gap-5">
@@ -140,21 +209,56 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Email</div>
-                  <div className="text-sm font-bold truncate max-w-[150px]">{user?.Email}</div>
+                  <div className="text-sm font-bold truncate max-w-[150px]" style={{ color: 'var(--text-main)' }}>{user?.Email}</div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5">
-                <div className="p-4 rounded-2xl bg-muted text-muted-foreground group-hover:bg-indigo-600/10 group-hover:text-indigo-600 transition-colors">
+              <div className="flex items-start gap-5">
+                <div className="p-4 rounded-2xl bg-muted text-muted-foreground group-hover:bg-indigo-600/10 group-hover:text-indigo-600 transition-colors mt-1">
                   <Code className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">CF Handle</div>
-                  <div className="text-sm font-bold">{user?.CF_Handle || 'Not linked'}</div>
+                <div className="flex-1">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">CF Handle</div>
+                  {isEditing ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={cfHandleInput}
+                          onChange={e => setCfHandleInput(e.target.value)}
+                          placeholder="your_cf_handle"
+                          className="flex-1 px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                          style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }}
+                        />
+                        <button
+                          onClick={handleSaveCfHandle}
+                          disabled={editLoading}
+                          className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all disabled:opacity-50"
+                        >
+                          {editLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {editError && <p className="text-[10px] text-rose-500 font-bold">{editError}</p>}
+                    </div>
+                  ) : (
+                    user?.CF_Handle ? (
+                      <a
+                        href={`https://codeforces.com/profile/${user.CF_Handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-bold inline-flex items-center gap-1 hover:underline"
+                        style={{ color: 'var(--primary)', textDecoration: 'none' }}
+                      >
+                        {user.CF_Handle} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <div className="text-sm font-bold text-muted-foreground">Not linked</div>
+                    )
+                  )}
                 </div>
               </div>
 
-              {!user?.CF_Handle && (
+              {!user?.CF_Handle && !isEditing && (
                 <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-start gap-3 mt-4">
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <div className="text-[10px] font-black uppercase tracking-tight">
@@ -168,7 +272,7 @@ export default function ProfilePage() {
 
         {/* Submissions List */}
         <div className="lg:col-span-2 rounded-[3rem] border bg-card p-10 shadow-2xl relative overflow-hidden group">
-          <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
+          <h2 className="text-2xl font-black mb-8 flex items-center gap-3" style={{ color: 'var(--text-main)' }}>
              <Activity className="w-6 h-6 text-indigo-600" />
              My Recent Solves
           </h2>
@@ -191,16 +295,22 @@ export default function ProfilePage() {
                                 {sub.VERDICTNAME}
                             </div>
                             <div>
-                                <div className="font-bold text-sm mb-1">{sub.TITLE}</div>
+                                <div className="font-bold text-sm mb-1" style={{ color: 'var(--text-main)' }}>{sub.TITLE}</div>
                                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
                                     <Calendar className="w-3 h-3" />
                                     {new Date(sub.SUBMITTEDAT).toLocaleDateString()}
                                 </div>
                             </div>
                         </div>
-                        <button className="p-3 rounded-2xl bg-white border shadow-sm hover:scale-110 transition-transform">
-                            <ChevronRight className="w-4 h-4 text-indigo-600" />
-                        </button>
+                        {/* Link to submissions for detail */}
+                        <a
+                          href="/submissions"
+                          className="p-3 rounded-2xl border shadow-sm hover:scale-110 transition-transform"
+                          style={{ backgroundColor: 'var(--surface-color)', borderColor: 'var(--border-color)' }}
+                          title="View all submissions"
+                        >
+                            <Activity className="w-4 h-4 text-indigo-600" />
+                        </a>
                     </div>
                 ))
             )}

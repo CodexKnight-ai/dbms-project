@@ -6,13 +6,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', overflow: 'hidden', position: 'relative' }}>
+      <div className="noise-overlay" />
       <Navbar />
-      <main className="ml-64 w-full px-8 py-10 transition-all duration-300">
-        <div className="mx-auto max-w-6xl">
+      <main style={{ flex: 1, marginLeft: '360px', height: '100vh', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 40px' }}>
           {children}
         </div>
       </main>
     </div>
   );
 }
+

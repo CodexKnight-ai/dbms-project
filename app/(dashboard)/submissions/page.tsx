@@ -2,7 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { Loader2, ExternalLink, User as UserIcon, Code2, Clock } from 'lucide-react';
+import { Loader2, Code2, Clock, Zap, Activity, User as UserIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, x: -20 },
+  show: { opacity: 1, x: 0 }
+};
 
 interface Submission {
   SUBMISSIONID: number;
@@ -37,78 +53,111 @@ export default function SubmissionsPage() {
 
   const getVerdictStyle = (verdict: string) => {
     switch (verdict) {
-      case 'AC': return 'text-green-500 bg-green-500/10 border-green-500/20';
-      case 'WA': return 'text-red-500 bg-red-500/10 border-red-500/20';
-      default: return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+      case 'AC': return { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', glow: '0 0 20px rgba(16, 185, 129, 0.2)' };
+      case 'WA': return { color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.3)', glow: '0 0 20px rgba(244, 63, 94, 0.2)' };
+      default: return { color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', glow: 'none' };
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Recent Submissions</h1>
-        <p className="text-muted-foreground">Activity from all community members</p>
-      </div>
+    <div style={{ paddingBottom: '80px', animation: 'fadeInUp 0.7s ease-out' }}>
+      
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', flexDirection: 'column', gap: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '48px', marginBottom: '64px' }}
+      >
+        <div style={{ display: 'inline-block', width: 'fit-content', padding: '8px 16px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid rgba(43,89,255,0.3)', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Live Uplink
+        </div>
+        <h1 style={{ fontSize: '4.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text-main)', textTransform: 'uppercase', fontStyle: 'italic', lineHeight: 0.9, margin: 0 }}>
+          Collective <span style={{ color: 'rgba(255,255,255,0.9)', textShadow: '0 0 20px rgba(43,89,255,0.4)' }}>Transmission.</span>
+        </h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem', fontWeight: 500, margin: 0 }}>Real-time submission telemetry from the global elite community.</p>
+      </motion.div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 0', gap: '24px' }}>
+          <Loader2 size={64} color="var(--primary)" className="animate-spin" />
+          <span style={{ fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5em', color: 'var(--primary)' }}>Scanning Data Packets...</span>
         </div>
       ) : (
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b bg-muted/50 font-medium">
+        <div className="glass-panel" style={{ borderRadius: '48px', overflow: 'hidden', padding: '1px' }}>
+          <div style={{ overflowX: 'auto', backgroundColor: 'rgba(5,5,5,0.6)', borderRadius: '47px' }}>
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
                 <tr>
-                  <th className="px-6 py-4">Solver</th>
-                  <th className="px-6 py-4">Question</th>
-                  <th className="px-6 py-4">Verdict</th>
-                  <th className="px-6 py-4">Code / ID</th>
-                  <th className="px-6 py-4">Time</th>
+                  <th style={{ padding: '32px 40px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>Source Identity</th>
+                  <th style={{ padding: '32px 40px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>Encrypted Intel</th>
+                  <th style={{ padding: '32px 40px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>Packet Verdict</th>
+                  <th style={{ padding: '32px 40px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>Code Hash</th>
+                  <th style={{ padding: '32px 40px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>Timestamp</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <motion.tbody 
+                variants={container}
+                initial="hidden"
+                animate="show"
+              >
                 {submissions.map((s) => (
-                  <tr key={s.SUBMISSIONID} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{s.FULLNAME}</span>
-                        <span className="text-xs text-muted-foreground">@{s.CF_HANDLE}</span>
+                  <motion.tr 
+                    key={s.SUBMISSIONID} 
+                    variants={item}
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background-color 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <td style={{ padding: '32px 40px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                           <UserIcon size={16} color="var(--text-muted)" />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 900, color: 'var(--text-main)', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>{s.FULLNAME}</span>
+                          {s.CF_HANDLE ? (
+                            <a href={`https://codeforces.com/profile/${s.CF_HANDLE}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>@ {s.CF_HANDLE}</a>
+                          ) : (
+                            <span style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>No Handle</span>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="max-w-[200px] truncate font-medium text-primary">
+                    <td style={{ padding: '32px 40px' }}>
+                      <div style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.02em' }}>
                         {s.TITLE}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${getVerdictStyle(s.VERDICTNAME)}`}>
+                    <td style={{ padding: '32px 40px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderRadius: '9999px', padding: '8px 20px', fontSize: '0.5625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', ...getVerdictStyle(s.VERDICTNAME) }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', boxShadow: `0 0 10px currentColor` }} />
                         {s.VERDICTNAME}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-xs font-mono text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Code2 className="h-3 w-3" />
-                        <span className="max-w-[150px] truncate">{s.SUBMITTEDCODE}</span>
+                    <td style={{ padding: '32px 40px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--text-muted)' }}>
+                        <Code2 size={16} color="rgba(43,89,255,0.5)" />
+                        <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '-0.05em', fontSize: '0.6875rem', fontWeight: 700 }}>HEX: {s.SUBMITTEDCODE.slice(0, 10)}...</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-3.5 w-3.5" />
+                    <td style={{ padding: '32px 40px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.625rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>
+                            <Clock size={16} opacity={0.3} />
                             {new Date(s.SUBMITTEDAT).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                         </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         </div>
       )}
 
       {!loading && submissions.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <p>No submissions yet.</p>
+        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 0', borderRadius: '64px', borderStyle: 'dashed', gap: '24px' }}>
+          <Activity size={48} color="rgba(255,255,255,0.1)" />
+          <p style={{ color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.3em', fontStyle: 'italic', margin: 0 }}>No active packet transmissions detected.</p>
         </div>
       )}
     </div>
